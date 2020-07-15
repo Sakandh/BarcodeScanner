@@ -19,7 +19,7 @@ namespace PDFReader
         static void Main(string[] args)
         {
             var pdfFile = @"C:\BarcodeTest\BCMerged.pdf";
-            var pngFile = @"C:\BarcodeTest\TLGQRtest2-1.png";
+            //var pngFile = @"C:\BarcodeTest\TLGQRtest2-1.png";
 
             //ReadBarCode(pdfFile);
             //ReadQRCode(pdfFile);
