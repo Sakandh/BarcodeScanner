@@ -18,105 +18,39 @@ namespace PDFReader
     {
         static void Main(string[] args)
         {
-            var pdfFile = @"C:\BarcodeTest\BCMerged.pdf";
-            //var pngFile = @"C:\BarcodeTest\TLGQRtest2-1.png";
+            CodeScanner codeScanner = new CodeScanner();
+            string fileDirectory = @"C:\BarcodeTest\Loop";
 
-            //ReadBarCode(pdfFile);
-            //ReadQRCode(pdfFile);
-            ReadCode(pdfFile);
-            //QRreader(pdfFile);
-            Console.ReadLine();
+            DirectoryInfo dir = new DirectoryInfo(fileDirectory);
+            int totalFiles = dir.GetFiles().Length;            
 
-        }
+            //Console.ReadLine();
 
-        public static void ReadBarCode(string pdf)
-        {
-            PdfDocument doc = new PdfDocument();
-            doc.LoadFromFile(pdf);
-            Bitmap image = (Bitmap)doc.SaveAsImage(0);
-            string[] datas = BarcodeScanner.Scan(image);
-
-            Console.WriteLine(datas[0]);
-        }
-
-        public static void ReadQRCode(string pdf)
-        {
-            PdfDocument doc = new PdfDocument();
-            doc.LoadFromFile(pdf);
-            Bitmap image = (Bitmap)doc.SaveAsImage(0);
-            string[] datas = BarcodeScanner.Scan(image, BarCodeType.QRCode);
-
-            Console.WriteLine(datas[0]);
-        }
-
-        public static void QRreader(string pdf)
-        {
-            // save the pdf in a larger size (2245px x 3179px)
-            PdfDocument doc = new PdfDocument();
-            doc.LoadFromFile(pdf);
-            PdfDocument newPDF = new PdfDocument();
-            foreach (PdfPageBase page in doc.Pages)
+            FileStream ostrm;
+            StreamWriter writer;
+            TextWriter oldOut = Console.Out;
+            try
             {
-                PdfPageBase newPage = newPDF.Pages.Add(PdfPageSize.A1, new PdfMargins(0));
-                PdfTextLayout loLayout = new PdfTextLayout();
-                loLayout.Layout = PdfLayoutType.OnePage;
-                page.CreateTemplate().Draw(newPage, new PointF(0, 0), loLayout);
+                ostrm = new FileStream(fileDirectory + @"\ScannedResults\Results.txt", FileMode.OpenOrCreate, FileAccess.Write);
+                writer = new StreamWriter(ostrm);
             }
-
-            // temporary pdf file path
-            string fileNameOnly = Path.GetFileNameWithoutExtension(pdf);
-            string extension = ".pdf";
-
-            string tempPDF = Path.GetTempPath() + fileNameOnly + extension;
-            newPDF.SaveToFile(tempPDF);
-            doc.LoadFromFile(tempPDF);
-
-            // converting pdf to image
-            Bitmap image = (Bitmap)doc.SaveAsImage(0);
-
-            // reading qr code from the new larger pdf
-            var qrcodeReader = new BarcodeReader();
-            var qrcodeResult = qrcodeReader.Decode(image);
-
-            if (qrcodeResult == null)
+            catch (Exception e)
             {
-                Console.WriteLine("Barcode/QR code not compatible");
+                Console.WriteLine("Cannot open Redirect.txt for writing");
+                Console.WriteLine(e.Message);
+                return;
             }
-            else
-            {
-                Console.WriteLine("Decode barcode text: " + qrcodeResult);
-                Console.WriteLine("QR Code Successful");
-            }
-        }
+            Console.SetOut(writer);
 
-        public static void ReadCode(string filePath)
-        {
-            if (filePath == null)
-                Console.WriteLine("No file");
+            codeScanner.FileLooper(dir);
 
-            PdfDocument pdfDocument = new PdfDocument();
+            Console.WriteLine("-------------------------------");
+            Console.WriteLine("       Total files: " + totalFiles);
+            Console.WriteLine("-------------------------------");
 
-            if (File.Exists(filePath))
-            {
-                // opens the pdf and returns the barcode value
-                pdfDocument.LoadFromFile(filePath);
-                Bitmap image = (Bitmap)pdfDocument.SaveAsImage(0);
-                string[] barcodeData = BarcodeScanner.Scan(image, BarCodeType.Code39Extended);
-
-                // if there's no barcode then it returns the no barcode message
-                if (barcodeData.Length < 1)
-                {
-                    QRreader(filePath);
-                }
-                else
-                {
-                    Console.WriteLine(barcodeData[0]);
-                }
-            }
-            else
-            {
-                throw new FileNotFoundException("File does not exist: " + filePath);
-            }
-        }
+            Console.SetOut(oldOut);
+            writer.Close();
+            ostrm.Close();
+        }        
     }
 }
